@@ -1,17 +1,17 @@
 [project]
-name = "cofy-api-myproject" # Change this to your project name
+name = "cofy-api-epv" # Change this to your project name
 authors = [
     { name="EnergyID", email = "info@energieid.be" },
     # Add your name and email here if you want to be listed as an author
 ]
 version = "0.1.0"
-description = "A Cofy API instance" # Add a short description of your project here
+description = "The EPV Cofy API instance" # Add a short description of your project here
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     # Add the extras you need: [tariff], [production]
     # e.g. "cofy-api[tariff,production]>=0.2.0"
-    "cofy-api>=0.4.0",
+    "cofy-api[directive]>=0.4.0",
 ]
 
 [dependency-groups]

@@ -1,10 +1,6 @@
-# cofy-api-template
+# EPV Cofy API
 
-Template repository for spinning up a new [cofy-api](https://github.com/EnergieID/cofy-api) instance — the open-source modular framework by [EnergyID](https://www.energieid.be/) for ingesting, standardising, and serving energy-related data.
-
-> **Use this template:** click _"Use this template"_ on GitHub (or clone and
-> rename) to start a fresh project. Then follow the steps below.
-
+This is the [EPV](https://www.enr-citoyennes.fr/) specific instance of the [cofy-api](https://github.com/EnergieID/cofy-api) — the open-source modular framework by [EnergyID](https://www.energieid.be/) for ingesting, standardising, and serving energy-related data.
 
 ## Quick start
 
