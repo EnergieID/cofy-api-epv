@@ -1,0 +1,57 @@
+name: test container
+
+on:
+  workflow_call:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: "build container and check health endpoint"
+        run: |
+            set -euxo pipefail
+
+            docker build -t cofy-api:latest .
+
+            CONTAINER_NAME=cofy-api-test
+            cleanup() {
+                status=$?
+                echo "Step exit status: $status"
+                echo "--- docker ps -a ---"
+                docker ps -a || true
+                echo "--- container logs ---"
+                docker logs "$CONTAINER_NAME" || true
+                docker stop "$CONTAINER_NAME" >/dev/null 2>&1 || true
+                docker rm "$CONTAINER_NAME" >/dev/null 2>&1 || true
+                exit $status
+            }
+            trap cleanup EXIT
+
+            docker run -d \
+                --name "$CONTAINER_NAME" \
+                -p 8080:8080 \
+                --env-file .env.example \
+                cofy-api:latest
+
+            for i in {1..15}; do
+                echo "Health check attempt $i"
+                if curl -fsS -v http://localhost:8080/health; then
+                    break
+                fi
+                sleep 2
+            done
+
+            RESPONSE=$(curl -fsS http://localhost:8080/health)
+            echo "Health check response: $RESPONSE"
+
+            if [[ "$RESPONSE" != '{"status":"ok"}' ]]; then
+                echo "Health check failed"
+                exit 1
+            fi

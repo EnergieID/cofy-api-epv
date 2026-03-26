@@ -1,0 +1,47 @@
+[project]
+name = "cofy-api-myproject" # Change this to your project name
+authors = [
+    { name="EnergyID", email = "info@energieid.be" },
+    # Add your name and email here if you want to be listed as an author
+]
+version = "0.1.0"
+description = "A Cofy API instance" # Add a short description of your project here
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    # Add the extras you need: [tariff], [production]
+    # e.g. "cofy-api[tariff,production]>=0.2.0"
+    "cofy-api>=0.4.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.13",
+    "ty>=0.0.12",
+]
+[tool.poe.tasks]
+lint = "ruff check --fix"
+format = "ruff format"
+check = "ty check"
+[tool.poe.tasks.dev]
+cmd = "fastapi dev main.py"
+envfile = ".env"
+[tool.poe.tasks.prod]
+shell = """
+docker build -t cofy-api .
+docker run -p 8080:8080 --env-file .env cofy-api
+"""
+[tool.ruff]
+line-length = 120
+[tool.ruff.lint]
+select = [
+    "E", # pycodestyle
+    "F", # Pyflakes
+    "UP", # pyupgrade
+    "B", # flake8-bugbear
+    "SIM", # flake8-simplify
+    "I", # isort
+]
+ignore = [
+    "E501", #Line too long
+]
