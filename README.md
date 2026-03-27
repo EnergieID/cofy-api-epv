@@ -8,6 +8,7 @@ This is the [EPV](https://www.enr-citoyennes.fr/) specific instance of the [cofy
 
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/) (fast Python package manager)
+- [poethepoet](https://poethepoet.natn.io/index.html) (task runner `uv tool install poethepoet`)
 
 ### 1. Install dependencies
 
@@ -24,10 +25,16 @@ cp .env.example .env
 
 ### 3. Start and seed the local Postgres database
 
-The directive source expects a Postgres connection string in `DB_URL`. You can use any Postgres instance, but for local development we recommend the provided Docker setup.
+The directive source expects a Postgres connection string in `DB_URL`. You can use any Postgres instance, but for local development we recommend the provided Docker setup. Spin up the container and seed the database with sample data:
 
 ```bash
 poe db-reset
+```
+
+If you have your dev database running without docker, you can still use the seeding command to create the `history` table and load the sample data:
+
+```bash
+poe db-seed
 ```
 
 ### 4. Enable your modules
