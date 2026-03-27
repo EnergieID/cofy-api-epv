@@ -7,13 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from db.schema import history_table
 
+DEFAULT_RESOLUTION = dt.timedelta(minutes=15)
+
 
 class DBSource(TimeseriesSource):
-    def __init__(self, db_url: str | None, itemid: int = 42923):
+    def __init__(self, db_url: str, itemid: int = 42923):
         super().__init__()
-        self.db_url = db_url
         self.itemid = itemid
-        self._engine: AsyncEngine | None = create_async_engine(db_url) if db_url else None
+        self._engine: AsyncEngine = create_async_engine(db_url)
 
     async def fetch_timeseries(
         self,
@@ -23,11 +24,9 @@ class DBSource(TimeseriesSource):
         **kwargs,
     ) -> Timeseries:
         """Fetch timeseries data between start and end datetimes with the given resolution."""
-        if self._engine is None:
-            msg = "DB_URL must be configured before fetching timeseries data."
-            raise ValueError(msg)
 
-        start_ts = self._to_epoch_seconds(start)
+        # To ensure we have enough data points for resampling, we fetch data starting from start - resolution.
+        start_ts = self._to_epoch_seconds(start - DEFAULT_RESOLUTION)
         end_ts = self._to_epoch_seconds(end)
         statement = (
             select(history_table.c.clock, history_table.c.value)
@@ -42,6 +41,11 @@ class DBSource(TimeseriesSource):
             rows = [(int(clock), float(value)) for clock, value in result.all()]
 
         frame = self._build_frame(rows)
+        frame = self._resample_frame(frame, resolution)
+
+        # We filter the frame again to ensure we only return data points within the requested start and end range after resampling.
+        frame = frame.filter((pl.col("timestamp") >= start) & (pl.col("timestamp") < end))
+
         return Timeseries(frame=frame)
 
     @staticmethod
@@ -69,3 +73,19 @@ class DBSource(TimeseriesSource):
             },
             schema=schema,
         )
+
+    @staticmethod
+    def _resample_frame(frame: pl.DataFrame, resolution: ISODuration) -> pl.DataFrame:
+        if frame.is_empty() or resolution == DEFAULT_RESOLUTION:
+            return frame
+        if not isinstance(resolution, dt.timedelta):
+            raise ValueError(f"Resolution {resolution} is not supported.")
+
+        if resolution < DEFAULT_RESOLUTION:
+            return frame.upsample("timestamp", every=resolution).fill_null(strategy="forward")
+        else:
+            return frame.group_by_dynamic("timestamp", every=resolution).agg(pl.col("value").mean())
+
+    @property
+    def supported_resolutions(self) -> list:
+        return ["PT1M", "PT5M", "PT15M", "PT30M", "PT1H", "PT6H", "P1D"]
