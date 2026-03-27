@@ -36,8 +36,8 @@ cofy.register_module(
     DirectiveModule(
         source=DirectiveSource(
             source=DBSource(
-                db_url=environ.get("DB_URL"),
-                itemid=int(environ.get("DB_ITEMID", "42923")),
+                db_url=environ.get("DB_URL", "postgresql+asyncpg://cofy:cofy@localhost:5432/epv"),
+                itemid=42923,
             ),
             boundaries=(-100000, 0, 100000, 500000),
         ),
