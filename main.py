@@ -14,7 +14,10 @@ from os import environ
 
 from cofy import CofyAPI
 from cofy.api import token_verifier
+from cofy.modules.directive import DirectiveModule, DirectiveSource
 from fastapi import Depends
+
+from .directive.dbsource import DBSource
 
 # ---------------------------------------------------------------------------
 # App
@@ -29,12 +32,9 @@ cofy = CofyAPI(dependencies=[Depends(token_verifier({environ.get("ENERGY_ID_COFY
 # Each module exposes its own set of API routes under the name you choose.
 # Browse the available modules:  https://github.com/EnergieID/cofy-api
 
-# --- Tariff module (day-ahead energy prices) --------------------------------
-# from cofy.modules.tariff import TariffModule
-#
-# cofy.register_module(
-#     TariffModule(
-#        api_key=environ.get("ENTSOE_API_KEY", ""),
-#        name="entsoe",
-#     )
-# )
+cofy.register_module(DirectiveModule(
+    source=DirectiveSource(
+        source=DBSource(environ.get("ENERGY_ID_COFY_API_DB_URL")),
+        boundaries=(-100000, 0, 100000, 500000)
+    ),
+))
