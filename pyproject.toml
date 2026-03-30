@@ -11,11 +11,15 @@ requires-python = ">=3.12"
 dependencies = [
     # Add the extras you need: [tariff], [production]
     # e.g. "cofy-api[tariff,production]>=0.2.0"
+    "asyncpg",
     "cofy-api[directive]>=0.4.0",
+    "polars",
+    "sqlalchemy",
 ]
 
 [dependency-groups]
 dev = [
+    "poethepoet",
     "ruff>=0.14.13",
     "ty>=0.0.12",
 ]
@@ -23,6 +27,18 @@ dev = [
 lint = "ruff check --fix"
 format = "ruff format"
 check = "ty check"
+[tool.poe.tasks.db-up]
+shell = """
+docker run --detach --name cofy-epv-db --env-file .env -p 5432:5432 postgres:16-alpine
+"""
+envfile = ".env"
+[tool.poe.tasks.db-down]
+cmd = "docker rm -f cofy-epv-db"
+[tool.poe.tasks.db-seed]
+cmd = "python -m db.seed"
+envfile = ".env"
+[tool.poe.tasks.db-reset]
+sequence = ["db-down", "db-up", "db-seed"]
 [tool.poe.tasks.dev]
 cmd = "fastapi dev main.py"
 envfile = ".env"

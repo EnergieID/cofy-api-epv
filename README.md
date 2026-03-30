@@ -8,6 +8,7 @@ This is the [EPV](https://www.enr-citoyennes.fr/) specific instance of the [cofy
 
 - Python 3.12+
 - [uv](https://docs.astral.sh/uv/) (fast Python package manager)
+- [poethepoet](https://poethepoet.natn.io/index.html) (task runner `uv tool install poethepoet`)
 
 ### 1. Install dependencies
 
@@ -22,12 +23,26 @@ cp .env.example .env
 # Edit .env and fill in your values
 ```
 
-### 3. Enable your modules
+### 3. Start and seed the local Postgres database
+
+The directive source expects a Postgres connection string in `DB_URL`. You can use any Postgres instance, but for local development we recommend the provided Docker setup. Spin up the container and seed the database with sample data:
+
+```bash
+poe db-reset
+```
+
+If you have your dev database running without docker, you can still use the seeding command to create the `history` table and load the sample data:
+
+```bash
+poe db-seed
+```
+
+### 4. Enable your modules
 
 Open `main.py` and add the modules you need (tariff, production, …).
 See [cofy-api README](https://github.com/EnergieID/cofy-api) for all available modules & options.
 
-### 4. Run the dev server
+### 5. Run the dev server
 
 ```bash
 poe dev          # starts FastAPI with auto-reload, reads .env
@@ -36,7 +51,7 @@ poe dev          # starts FastAPI with auto-reload, reads .env
 The API is now available at `http://localhost:8000`.
 Health-check: `GET /health`
 
-### 5. Run a production-like container locally
+### 6. Run a production-like container locally
 
 ```bash
 poe prod         # builds the Docker image and runs it on port 8080
@@ -64,6 +79,15 @@ Every commit will automatically run:
 | **ty** | Type checking | `poe check` |
 
 You can also run them manually at any time.
+
+### Local database workflow
+
+```bash
+poe db-up        # start the local postgres container
+poe db-seed      # recreate the history table and load db/dev-seed.csv
+poe db-reset     # run both commands above
+poe db-down      # remove the local postgres container
+```
 
 ## License
 
