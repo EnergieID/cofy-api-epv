@@ -107,12 +107,16 @@ wheels = [
 
 [[package]]
 name = "cofy-api"
-version = "0.0.0"
-source = { git = "https://github.com/EnergieID/cofy-api.git?rev=feat%2Fallow-dynamic-boundaries#7806740ad725276d3fb7fb30f72afa34a7261fdc" }
+version = "0.5.2"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "fastapi", extra = ["standard"] },
     { name = "pydantic" },
     { name = "starlette" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/47/fd/d85625879a988250002ba114b4655e4fe3a674abdeb86ca6d27bffca98b4/cofy_api-0.5.2.tar.gz", hash = "sha256:c28fe0a71ee95f25151491cbe56dab3e353bf65d0b69bec4abca31847a51c05d", size = 23402, upload-time = "2026-04-30T12:48:45.304Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/46/03/0f808bd1e1b2be2b2bdc1c72c80ed5994585c5d88774c0fa4e7e0a5dc51b/cofy_api-0.5.2-py3-none-any.whl", hash = "sha256:2ff786c5396974710f04967694fbe3a1a64c5218950498de135ad9392baedcef", size = 32794, upload-time = "2026-04-30T12:48:43.998Z" },
 ]
 
 [package.optional-dependencies]
@@ -142,7 +146,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "asyncpg" },
-    { name = "cofy-api", extras = ["directive"], git = "https://github.com/EnergieID/cofy-api.git?rev=feat%2Fallow-dynamic-boundaries" },
+    { name = "cofy-api", extras = ["directive"], specifier = ">=0.5.2" },
     { name = "polars" },
     { name = "sqlalchemy" },
 ]

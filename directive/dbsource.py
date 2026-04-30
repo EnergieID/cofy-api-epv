@@ -174,11 +174,15 @@ class BoundaryDBSource(BaseDBSource):
         ).sort("timestamp")
 
         # Build a dense target timestamp series from start to end (exclusive).
-        n_steps = int((end - start) / resolution)
+        # Floor start to the nearest resolution boundary (aligned to midnight UTC)
+        midnight = start.replace(hour=0, minute=0, second=0, microsecond=0)
+        aligned_start = midnight + int((start - midnight) / resolution) * resolution
+
+        n_steps = int((end - aligned_start) / resolution) + 1
         if n_steps <= 0:
             return pl.DataFrame(schema=schema)
 
-        timestamps = [start + resolution * i for i in range(n_steps)]
+        timestamps = [aligned_start + resolution * i for i in range(n_steps)]
         full_frame = pl.DataFrame(
             {"timestamp": timestamps},
             schema={"timestamp": pl.Datetime(time_zone="UTC")},
