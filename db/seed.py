@@ -10,11 +10,15 @@ from db.schema import history_table, metadata, seuils_api_meteo_table
 MAX_RETRIES = 5
 RESOLUTION = dt.timedelta(minutes=15)
 WINDOW_DAYS = 10
-ITEMID = 42923
-COHORT_ID = "ACC_1"
+
+# (cohort_id, itemid, solar_scale) – solar_scale lets each community have a slightly different profile
+COHORTS = [
+    ("ACC_1", 42923, 1.0),
+    ("ACC_2", 42924, 0.75),  # smaller community, less solar capacity
+]
 
 
-def _duck_curve(hour: float, day_of_year: int) -> float:
+def _duck_curve(hour: float, day_of_year: int, solar_scale: float = 1.0) -> float:
     """Net community power (W) at a given hour-of-day using a simplified duck curve.
 
     Positive = net import from grid, negative = net export (solar surplus).
@@ -24,12 +28,12 @@ def _duck_curve(hour: float, day_of_year: int) -> float:
 
     base = 4_000_000.0
     morning = 3_000_000.0 * math.exp(-0.5 * ((hour - 8.0) / 1.5) ** 2)
-    solar = -9_500_000.0 * math.exp(-0.5 * ((hour - 13.0) / 2.5) ** 2) * seasonal
+    solar = -9_500_000.0 * math.exp(-0.5 * ((hour - 13.0) / 2.5) ** 2) * seasonal * solar_scale
     evening = 8_000_000.0 * math.exp(-0.5 * ((hour - 18.0) / 2.0) ** 2)
     return base + morning + solar + evening
 
 
-def generate_history_rows(start: dt.datetime, end: dt.datetime) -> list[dict]:
+def generate_history_rows(start: dt.datetime, end: dt.datetime, itemid: int, solar_scale: float) -> list[dict]:
     rows = []
     t = start
     while t < end:
@@ -37,10 +41,10 @@ def generate_history_rows(start: dt.datetime, end: dt.datetime) -> list[dict]:
         doy = t.timetuple().tm_yday
         # Small deterministic ripple so adjacent 15-min slots differ
         ripple = 150_000 * math.sin(t.timestamp() / 900 * 1.3)
-        value = _duck_curve(hour, doy) + ripple
+        value = _duck_curve(hour, doy, solar_scale) + ripple
         rows.append(
             {
-                "itemid": ITEMID,
+                "itemid": itemid,
                 "clock": int(t.timestamp()),
                 "value": round(value, 3),
                 "ns": 0,
@@ -50,7 +54,7 @@ def generate_history_rows(start: dt.datetime, end: dt.datetime) -> list[dict]:
     return rows
 
 
-def generate_boundary_rows(start: dt.datetime) -> list[dict]:
+def generate_boundary_rows(start: dt.datetime, cohort_id: str) -> list[dict]:
     """A few boundary snapshots spread across the seeding window (W)."""
     # seuil_neg2 < seuil_neg1 < 0 < seuil_pos1 < seuil_pos2
     snapshots = [
@@ -63,7 +67,7 @@ def generate_boundary_rows(start: dt.datetime) -> list[dict]:
     ]
     return [
         {
-            "id": COHORT_ID,
+            "id": cohort_id,
             "timestamp_debut_validite": int(ts.timestamp()),
             "seuil_neg2": n2,
             "seuil_neg1": n1,
@@ -84,8 +88,14 @@ async def seed() -> None:
     start = now - dt.timedelta(days=WINDOW_DAYS)
     end = now + dt.timedelta(days=WINDOW_DAYS)
 
-    history_rows = generate_history_rows(start, end)
-    boundary_rows = generate_boundary_rows(start)
+    history_rows = [
+        row
+        for cohort_id, itemid, solar_scale in COHORTS
+        for row in generate_history_rows(start, end, itemid, solar_scale)
+    ]
+    boundary_rows = [
+        row for cohort_id, itemid, solar_scale in COHORTS for row in generate_boundary_rows(start, cohort_id)
+    ]
 
     engine = create_async_engine(db_url)
     async with engine.begin() as connection:
