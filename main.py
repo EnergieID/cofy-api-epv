@@ -10,6 +10,7 @@ Quick start:
   3. `poe dev` to start the dev server (auto-reloads, reads .env)
 """
 
+import json
 from os import environ
 
 from cofy import CofyAPI
@@ -32,14 +33,18 @@ cofy = CofyAPI(dependencies=[Depends(token_verifier({environ.get("ENERGY_ID_COFY
 # Each module exposes its own set of API routes under the name you choose.
 # Browse the available modules:  https://github.com/EnergieID/cofy-api
 
-cofy.register_module(
-    DirectiveModule(
-        source=DirectiveSource(
-            source=DBSource(
-                db_url=environ.get("DB_URL", "postgresql+asyncpg://cofy:cofy@localhost:5432/epv"),
-                itemid=42923,
+forecasts = json.loads(environ.get("FORECASTS", "{}"))
+for name, id in forecasts.items():
+    cofy.register_module(
+        DirectiveModule(
+            source=DirectiveSource(
+                source=DBSource(
+                    db_url=environ.get("DB_URL", "postgresql+asyncpg://cofy:cofy@localhost:5432/epv"),
+                    itemid=id,
+                ),
+                boundaries=(-100000, 0, 100000, 500000),
             ),
-            boundaries=(-100000, 0, 100000, 500000),
-        ),
+            name=name,
+            description=f"Directive for community {name}",
+        )
     )
-)
