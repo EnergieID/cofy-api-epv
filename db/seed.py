@@ -3,6 +3,7 @@ import datetime as dt
 import math
 import os
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from db.schema import history_table, metadata, seuils_api_meteo_table
@@ -99,6 +100,7 @@ async def seed() -> None:
 
     engine = create_async_engine(db_url)
     async with engine.begin() as connection:
+        await connection.execute(text("CREATE SCHEMA IF NOT EXISTS bdd_coordination_schema"))
         await connection.run_sync(metadata.drop_all)
         await connection.run_sync(metadata.create_all)
         await connection.execute(history_table.insert(), history_rows)

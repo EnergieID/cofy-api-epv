@@ -23,4 +23,5 @@ seuils_api_meteo_table = Table(
     Column("seuil_pos1", Double, nullable=False),
     Column("seuil_pos2", Double, nullable=False),
     PrimaryKeyConstraint("id", "timestamp_debut_validite", name="seuils_api_meteo_pkey"),
+    schema="bdd_coordination_schema",
 )
