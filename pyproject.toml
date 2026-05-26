@@ -12,7 +12,7 @@ dependencies = [
     # Add the extras you need: [tariff], [production]
     # e.g. "cofy-api[tariff,production]>=0.2.0"
     "asyncpg",
-    "cofy-api[directive]>=0.4.0",
+    "cofy-api[directive]>=0.5.2",
     "polars",
     "sqlalchemy",
 ]
@@ -45,7 +45,7 @@ envfile = ".env"
 [tool.poe.tasks.prod]
 shell = """
 docker build -t cofy-api .
-docker run -p 8080:8080 --env-file .env cofy-api
+docker run -p 8080:8080 --env-file .env --add-host=host.docker.internal:host-gateway cofy-api
 """
 [tool.ruff]
 line-length = 120

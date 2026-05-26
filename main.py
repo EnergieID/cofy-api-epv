@@ -15,10 +15,10 @@ from os import environ
 
 from cofy import CofyAPI
 from cofy.api import token_verifier
-from cofy.modules.directive import DirectiveModule, DirectiveSource
+from cofy.modules.directive import DirectiveModule, DynamicBoundaryDirectiveSource
 from fastapi import Depends
 
-from directive.dbsource import DBSource
+from directive.dbsource import BoundaryDBSource, SignalDBSource
 
 # ---------------------------------------------------------------------------
 # App
@@ -37,12 +37,17 @@ forecasts = json.loads(environ.get("FORECASTS", "{}"))
 for name, id in forecasts.items():
     cofy.register_module(
         DirectiveModule(
-            source=DirectiveSource(
-                source=DBSource(
+            source=DynamicBoundaryDirectiveSource(
+                signal_source=SignalDBSource(
                     db_url=environ.get("DB_URL", "postgresql+asyncpg://cofy:cofy@localhost:5432/epv"),
                     itemid=id,
                 ),
-                boundaries=(-100000, 0, 100000, 500000),
+                boundary_source=BoundaryDBSource(
+                    db_url=environ.get(
+                        "BOUNDARY_DB_URL", environ.get("DB_URL", "postgresql+asyncpg://cofy:cofy@localhost:5432/epv")
+                    ),
+                    cohort_id=name,
+                ),
             ),
             name=name,
             description=f"Directive for community {name}",
