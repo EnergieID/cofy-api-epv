@@ -51,5 +51,8 @@ for name, id in forecasts.items():
             ),
             name=name,
             description=f"Directive for community {name}",
+            default_args={
+                "resolution": "PT15M",
+            },
         )
     )
