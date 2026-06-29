@@ -20,7 +20,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "poethepoet",
-    "ruff>=0.15.18",
+    "ruff>=0.15.20",
     "ty>=0.0.55",
 ]
 [tool.poe.tasks]
