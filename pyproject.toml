@@ -21,7 +21,7 @@ dependencies = [
 dev = [
     "poethepoet",
     "ruff>=0.16.1",
-    "ty>=0.0.69",
+    "ty>=0.0.71",
 ]
 [tool.poe.tasks]
 lint = "ruff check --fix"
